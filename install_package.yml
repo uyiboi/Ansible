@@ -3,6 +3,9 @@
   hosts: server
   become: True
 
+# Update YUM and install base packages that will be useful for the cluster setup.
+# Also disable SELinux and Firewalld
+
   tasks:
     - name: UPDATE YUM
       yum:
@@ -32,6 +35,9 @@
           - 'yum-utils'
         state: latest
         update_cache: True
+
+# This section  follows steps on Docker.com Website to install Docker
+# https://docs.docker.com/engine/install/centos/
 
     - name: ADD DOCKER REPO
       shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -94,6 +100,9 @@
         name: docker
         enabled: yes
         masked: no
+
+# This section  follows steps on Kubernetes.io Website to install Kubeadm
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 
     - name: ADD KUBERNETES YUM REPO
       lineinfile:

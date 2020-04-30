@@ -21,6 +21,8 @@
       systemd:
         name: firewalld
         enabled: no
+        state: stopped
+      tags: firewalld
 
     - name: INSTALL BASE PKG
       yum:

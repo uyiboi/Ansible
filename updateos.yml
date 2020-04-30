@@ -1,0 +1,26 @@
+---
+- name: update all systems
+  hosts: allservers
+
+  tasks:
+    - name: update Debian OS
+      apt:
+        force_apt_get: yes
+        name: "*"
+        state: latest
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+      register: apt_results
+
+    - name: update RedHat OS
+      yum:
+        name: "*"
+        state: latest
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+      register: apt_results
+
+    - name: reboot OS
+      reboot:
+        pre_reboot_delay: 60
+      when: apt_results is changed or yum_results is changed

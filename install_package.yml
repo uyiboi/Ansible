@@ -1,0 +1,142 @@
+---
+- name: INSTALL PACKAGES
+  hosts: server
+  become: True
+
+  tasks:
+    - name: UPDATE YUM
+      yum:
+        update_cache: True
+
+    - name: Ensure SELinux is set to enforcing mode
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: SELINUX=disabled
+
+    - name: DISABLE FIREWALLD
+      systemd:
+        name: firewalld
+        enabled: no
+
+    - name: INSTALL BASE PKG
+      yum:
+        name:
+          - 'epel-release'
+          - 'bash-completion'
+          - 'vim'
+          - 'git'
+          - 'curl'
+          - 'lvm2'
+          - 'device-mapper-persistent-data'
+          - 'yum-utils'
+        state: latest
+        update_cache: True
+
+    - name: ADD DOCKER REPO
+      shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: INSTALL DOCKER
+      yum:
+        name:
+          - 'docker-ce'
+          - 'docker-ce-cli'
+          - 'containerd.io'
+        state: latest
+        update_cache: True
+
+    - name: CREATE ETC/DOCKER
+      file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+
+    - name: UPDATE DEAMON.JSON
+      blockinfile:
+        path: /etc/docker/daemon.json
+        create: True
+        block: |
+          {
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+          "max-size": "100m"
+          },
+          "storage-driver": "overlay2",
+          "storage-opts": [
+          "overlay2.override_kernel_check=true"
+          ]
+          }
+
+    - name: REMOVE COMMENTS IN DEAMON.JSON
+      lineinfile:
+        path: /etc/docker/daemon.json
+        state: absent
+        regexp: '^#'
+
+    - name: CREATE ETC/SYSTEMD/SYSTEM/DOCKER.SERVICE.D
+      file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: '0755'
+
+    - name: SYSTEMD RELOAD
+      systemd:
+        daemon_reload: yes
+
+    - name: RELOAD DOCKER
+      systemd:
+        name: docker
+        state: reloaded
+
+    - name: ENABLE DOCKER
+      systemd:
+        name: docker
+        enabled: yes
+        masked: no
+
+    - name: ADD KUBERNETES YUM REPO
+      lineinfile:
+        path: /etc/yum.repos.d/kubernetes.repo
+        create: yes
+        line: '{{ item }}'
+      with_items:
+        - '[kubernetes]'
+        - 'name=Kubernetes'
+        - 'baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch'
+        - 'enabled=1'
+        - 'gpgcheck=1'
+        - 'repo_gpgcheck=1'
+        - 'gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg'
+        - 'exclude=kubelet kubeadm kubectl'
+      tags: kube_repo
+
+    - name: SWAPOFF
+      replace:
+        dest: /etc/fstab
+        regexp: '^/dev/mapper/cl-swap'
+        replace: '#/dev/mapper/cl-swap'
+      tags: swapoff
+
+    - name: INSTALL K8
+      shell: yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+    - name: ENABLE & START KUBELET
+      systemd:
+        name: kubelet
+        enabled: yes
+        state: started
+
+    - name: SET IPTABLE BRIDGING
+      lineinfile:
+        path: /etc/sysctl.d/k8s.conf
+        create: yes
+        line: '{{ item }}'
+      with_items:
+        - 'net.bridge.bridge-nf-call-ip6tables = 1'
+        - 'net.bridge.bridge-nf-call-iptables = 1'
+      tags: iptable_bridge
+
+    - name: SYSCTL RELOAD
+      shell: sysctl --system
+

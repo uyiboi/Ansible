@@ -1,0 +1,40 @@
+---
+- name: INITIALIZE KUBE
+  hosts: kube-master
+  become: True
+
+  tasks:
+    - name: CHECK CPU CORE
+      shell: nproc --all
+      register: cpu_total
+      failed_when: cpu_total.rc <= 1
+
+    - name: PULL KUBE IMAGES
+      shell: kubeadm config images pull
+
+    - name: INITIALIZE KUBE
+      shell: kubeadm init >> kube_init.log
+      args:
+        chdir: $HOME
+        creates: kube_init.log
+      tags: kube_init
+
+    - name: CREATE .KUBE DIR
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: COPY ADMIN.CONF TO KUBE HOMEDIR
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/centos/.kube/config
+        remote_src: yes
+
+    - name: CREATE POD NETWORK
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml >>  kube_pod.log
+      args:
+        chdir: $HOME
+        creates: kube_pod.log
+      tags: kube_pod
+

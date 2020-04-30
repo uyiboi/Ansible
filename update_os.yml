@@ -1,6 +1,6 @@
 ---
 - name: update all systems
-  hosts: allservers
+  hosts: kube-cluster
 
   tasks:
     - name: update Debian OS

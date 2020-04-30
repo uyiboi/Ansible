@@ -4,10 +4,8 @@
   sudo: yes
   tasks:
     # This task updates servers that use 'yum' and RPM packages
-    # by looking for CentOS or RedHat as a distribution name. This
-    # will may also pick up modern OracleLinux but OL has a lot of
-    # different strings.
-    - name: .rpm upgrade server
+    # by looking for CentOS or RedHat as a distribution name.
+    - name: .RPM UPGRADE
       yum: >
         update_cache=yes
         name=*
@@ -20,7 +18,7 @@
 
     # This task updates servers that use 'apt' and DEB packages
     # by looking for Debian or Ubuntu as a distribution name.
-    - name: .deb do dist-upgrade
+    - name: .DEB UPGRADE
       apt: >
         update_cache=yes
         cache_valid_time=1200

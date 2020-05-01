@@ -1,6 +1,6 @@
 ---
 - name: INITIALIZE KUBE
-  hosts: kube-cluster
+  hosts: kube-master
   become: True
 
   tasks:
@@ -38,15 +38,6 @@
         chdir: $HOME
         creates: kube_pod.log
       tags: kube_pod
-
-- hosts: kube-master
-  gather_facts: false
-  tasks:
-    - name: CHECK CPU CORE
-      host: kube-master
-      shell: nproc --all
-      register: cpu_total
-      failed_when: cpu_total.rc <= 1
 
     - name: GET KUEBADM JOIN
       shell: grep -A1 "kubeadm join" kube_init.log

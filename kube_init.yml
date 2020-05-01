@@ -5,7 +5,6 @@
 
   tasks:
     - name: CHECK CPU CORE
-      host: kube-master
       shell: nproc --all
       register: cpu_total
       failed_when: cpu_total.rc <= 1
@@ -41,14 +40,16 @@
 
     - name: GET KUEBADM JOIN
       shell: grep -A1 "kubeadm join" kube_init.log
-      register: kube_join_raw
+      register: kube_join
 
-    - name: set join command
+    - name: SET JOIN
       set_fact:
-      kube_join: "{{ kube_join_raw.stdout_lines[0] }}"
+        kube_join: "{{ kube_join.stdout_lines[0] }}"
 
 
 - hosts: kube-workers
+  become: True
+
   tasks:
     - name: JOIN CLUSTER
       shell: "{{ hostvars['kube-master'].kube_join }}  >> kubeadm_join.log"

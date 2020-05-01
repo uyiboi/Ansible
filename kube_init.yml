@@ -1,6 +1,6 @@
 ---
 - name: INITIALIZE KUBE
-  hosts: kube-master
+  hosts: kube-cluster
   become: True
 
   tasks:
@@ -32,9 +32,29 @@
         remote_src: yes
 
     - name: CREATE POD NETWORK
-      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml >>  kube_pod.log
+      shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" >>  kube_pod.log
       args:
         chdir: $HOME
         creates: kube_pod.log
       tags: kube_pod
+
+    - hosts: kube-master
+      gather_facts: false
+      tasks:
+        - name: GET KUEBADM JOIN
+          shell: kubeadm token create --print-join-command
+          register: kube_join_raw
+
+        - name: set join command
+          set_fact:
+            kube_join: "{{ kube_join_raw.stdout_lines[0] }}"
+
+
+    - hosts: kube-workers
+      tasks:
+        - name: JOIN CLUSTER
+          shell: "{{ hostvars['kube-master'].kube_join }}  >> kubeadm_join.log"
+          args:
+            chdir: $HOME
+            creates: kubeadm_join.log
 

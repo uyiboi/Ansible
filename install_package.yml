@@ -59,23 +59,6 @@
         state: directory
         mode: '0755'
 
-    - name: UPDATE DEAMON.JSON
-      blockinfile:
-        path: /etc/docker/daemon.json
-        create: True
-        block: |
-          {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-          "max-size": "100m"
-          },
-          "storage-driver": "overlay2",
-          "storage-opts": [
-          "overlay2.override_kernel_check=true"
-          ]
-          }
-
     - name: REMOVE COMMENTS IN DEAMON.JSON
       lineinfile:
         path: /etc/docker/daemon.json
@@ -134,25 +117,29 @@
 
     - name: INSTALL KUBELET
       yum:
-        name:
+        name: kubelet-1.17.5
         state: present
         update_cache: true
+      tags: kube_install
 
     - name: INSTALL KUBEADM
       yum:
-        name:
+        name: kubeadm-1.17.5
         state: present
+      tags: kube_install
 
     - name: INSTALL KUBECTL
       yum:
-        name:
+        name: kubectl-1.17.5
         state: present
+      tags: kube_install
 
     - name: ENABLE & START KUBELET
       systemd:
         name: kubelet
         enabled: yes
         state: started
+      tags: kube_install
 
     - name: SET IPTABLE BRIDGING
       lineinfile:

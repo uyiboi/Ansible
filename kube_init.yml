@@ -42,7 +42,7 @@
       gather_facts: false
       tasks:
         - name: GET KUEBADM JOIN
-          shell: kubeadm token create --print-join-command
+          shell: grep -A1 "kubeadm join" kube_init.log
           register: kube_join_raw
 
         - name: set join command

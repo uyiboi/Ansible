@@ -112,26 +112,9 @@
         replace: '#/dev/mapper/cl-swap'
       tags: swapoff
 
-#   - name: INSTALL K8
-#    shell: yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
-
-    - name: INSTALL KUBELET
-      yum:
-        name: kubelet-1.17.5
-        state: present
-        update_cache: true
-      tags: kube_install
-
-    - name: INSTALL KUBEADM
-      yum:
-        name: kubeadm-1.17.5
-        state: present
-      tags: kube_install
-
-    - name: INSTALL KUBECTL
-      yum:
-        name: kubectl-1.17.5
-        state: present
+    - name: INSTALL K8
+      shell: yum install -y kubelet  kubeadm kubectl  --disableexcludes=kubernetes
+      # shell: yum install -y kubelet-1.17.5  kubeadm-1.17.5 kubectl-1.17.5  --disableexcludes=kubernetes
       tags: kube_install
 
     - name: ENABLE & START KUBELET

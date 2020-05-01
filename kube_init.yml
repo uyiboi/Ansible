@@ -7,7 +7,7 @@
     - name: CHECK CPU CORE
       shell: nproc --all
       register: cpu_total
-      failed_when: cpu_total.rc <= 1
+      failed_when: cpu_total.stdout == 1
 
     - name: PULL KUBE IMAGES
       shell: kubeadm config images pull
